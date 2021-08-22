@@ -33,7 +33,7 @@
 /* Recipient's email*/
 #define RECIPIENT_EMAIL "johannes.loehr89@gmail.com"
 //#define RECIPIENT_EMAIL "johannes.loehr89@gmail.com"
-//#define RECIPIENT_EMAIL2 "loehr.carina@gmail.com"
+#define RECIPIENT_EMAIL2 "loehr.carina@gmail.com"
 
 /* The SMTP Session object used for Email sending */
 SMTPSession smtp;
@@ -82,7 +82,8 @@ void setup(){
   message.sender.name = "ESP";
   message.sender.email = AUTHOR_EMAIL;
   message.subject = "Fass bitte auffüllen!!";
-  message.addRecipient("ESP", RECIPIENT_EMAIL);
+  message.addRecipient("Johannes", RECIPIENT_EMAIL);
+  message.addRecipient("Carina", RECIPIENT_EMAIL2);
 
   /*Send HTML message*/
   String htmlMsg = "<div style=\"color:#2f4468;\"><h1>Das Fass ist leer! ;)</h1><p>- bitte nachfüllen - Gießen ist deaktiviert</p></div>";
@@ -109,8 +110,8 @@ void setup(){
     return;
 
   /* Start sending Email and close the session */
-  //if (!MailClient.sendMail(&smtp, &message))
-  //  Serial.println("Error sending Email, " + smtp.errorReason());
+  if (!MailClient.sendMail(&smtp, &message))
+    Serial.println("Error sending Email, " + smtp.errorReason());
 }
 
 void loop(){
