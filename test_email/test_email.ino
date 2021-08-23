@@ -18,22 +18,22 @@
   #include <ESP8266WiFi.h>
 #endif
 #include <ESP_Mail_Client.h>
+#include <credentials.h> //in this file credentials for wifi and E-mail are stored
+//you can either define them below directly in the code or create an own credentials.h file
 
 
-#define WIFI_SSID "Carinjo"
-#define WIFI_PASSWORD "bP3ry6tdehke"
+//define Wifi and E-Mail credentials
+/* are currently read from credentials.h
+#define ssid "XXX"
+#define wifi_password "XXX"
+#define author_email "XXX@gmail.com"
+#define author_password "XXX"
+#define recipient_email "XXX@gmail.com"
+#define recipient_email2 "XXX@gmail.com"
+*/
 
 #define SMTP_HOST "smtp.gmail.com"
 #define SMTP_PORT 465
-
-/* The sign in credentials */
-#define AUTHOR_EMAIL "johannes.esp32@gmail.com"
-#define AUTHOR_PASSWORD "Gurkensack#1"
-
-/* Recipient's email*/
-#define RECIPIENT_EMAIL "johannes.loehr89@gmail.com"
-//#define RECIPIENT_EMAIL "johannes.loehr89@gmail.com"
-#define RECIPIENT_EMAIL2 "loehr.carina@gmail.com"
 
 /* The SMTP Session object used for Email sending */
 SMTPSession smtp;
@@ -45,7 +45,7 @@ void setup(){
   Serial.begin(115200);
   Serial.println();
   Serial.print("Connecting to AP");
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.begin(ssid, wifi_password);
   while (WiFi.status() != WL_CONNECTED){
     Serial.print(".");
     delay(200);
@@ -71,8 +71,8 @@ void setup(){
   /* Set the session config */
   session.server.host_name = SMTP_HOST;
   session.server.port = SMTP_PORT;
-  session.login.email = AUTHOR_EMAIL;
-  session.login.password = AUTHOR_PASSWORD;
+  session.login.email = author_email;
+  session.login.password = author_password;
   session.login.user_domain = "";
 
   /* Declare the message class */
@@ -80,10 +80,10 @@ void setup(){
 
   /* Set the message headers */
   message.sender.name = "ESP";
-  message.sender.email = AUTHOR_EMAIL;
+  message.sender.email = author_email;
   message.subject = "Fass bitte auffüllen!!";
-  message.addRecipient("Johannes", RECIPIENT_EMAIL);
-  message.addRecipient("Carina", RECIPIENT_EMAIL2);
+  message.addRecipient("ESP", recipient_email);
+  message.addRecipient("ESP", recipient_email2);
 
   /*Send HTML message*/
   String htmlMsg = "<div style=\"color:#2f4468;\"><h1>Das Fass ist leer! ;)</h1><p>- bitte nachfüllen - Gießen ist deaktiviert</p></div>";
