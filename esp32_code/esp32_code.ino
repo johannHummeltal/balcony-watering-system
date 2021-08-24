@@ -45,12 +45,12 @@ int maxMoisture = 321; // sensor in water
 int moisture1 = 0; // raw measurement value of sensor 1
 
 //define watering times
-int wateringTime1 = 120;//180; //time in seconds
-int wateringTime2 = 75;//120; // time in seconds
+int wateringTime1 = 2;//120; //time in seconds
+int wateringTime2 = 5;//75; // time in seconds
 
 
-double wakeUpTimeHour = 8; // wakeup for next watering after XX hours
-int wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
+double wakeUpTimeHour = 0.005; // wakeup for next watering after XX hours
+double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
 int uSecToSec = 1000000;
 
 int wifiConnected = 0; //indicator if connection to WIFI was succesful(1) or not(0)
@@ -230,9 +230,11 @@ void wateringFunction(){
   Serial.println("Pump started");
     digitalWrite(pump, HIGH);
     digitalWrite(valve1, HIGH);
+    Serial.println("valve 1 switched on");
     delay(wateringTime1 * 1000);
     digitalWrite(valve1, LOW);
     digitalWrite(valve2, HIGH);
+    Serial.println("valve 2 switched on");
     delay(wateringTime2 * 1000);
     digitalWrite(pump,LOW);
     digitalWrite(valve1, LOW);
