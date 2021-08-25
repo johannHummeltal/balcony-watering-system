@@ -1,7 +1,7 @@
 <html>
       <head>
             <script type = "text/javascript">
-              var ws = new WebSocket("ws://192.168.0.234/ws");
+              var ws = new WebSocket("ws://192.168.0.88/ws");
        
               ws.onopen = function() {
                   window.alert("Connected");
@@ -256,9 +256,21 @@ input.textinput {
 <span id = "fill_level">  </span>
 
 <!-- Buttons-->
-<br/><input type="button" id="stop" class="button" value="Stdby" />
+<br/><input type="button" id="stop" class="button" value="Stop" />
+<script type="text/javascript">
+   document.getElementById('stop').addEventListener('click', stop_function);
+   function stop_function(){
+       ws.send("stop");
+   }
+ </script>
 
-<br/><input type="button" id="stdby" class="button" value="Stop" />
+<br/><input type="button" id="stdby" class="button" value="Stdby" />
+
+<script type="text/javascript">
+   document.getElementById('stdby').addEventListener('click', stop_function);
+   function stop_function(){
+       ws.send("stdby");
+   }
 
 <script type="text/javascript">
   document.getElementById('Aus').addEventListener('click', stop_function);

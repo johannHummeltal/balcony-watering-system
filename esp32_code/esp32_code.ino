@@ -18,6 +18,8 @@
 
 #include <WiFi.h>
 #include <ESP_Mail_Client.h>
+#include "ESPAsyncWebServer.h"
+#include "SPIFFS.h"
 #include <credentials.h> //in this file credentials for wifi and E-mail are stored
 //you can either define them below directly in the code or create an own credentials.h file
 
@@ -38,15 +40,15 @@ int Taster1Pushed = 0;
 
 
 //declare some variable
-
+int debug = 0; //set debug level; 1== print additional serial messages
 //moisture sensor (optional, not yet realized)
 int minMoisture = 2343; // value for a completely try sensor (in air)
 int maxMoisture = 321; // sensor in water
 int moisture1 = 0; // raw measurement value of sensor 1
 
 //define watering times
-int wateringTime1 = 2;//120; //time in seconds
-int wateringTime2 = 5;//75; // time in seconds
+int wateringTime1 = 20;//120; //time in seconds
+int wateringTime2 = 25;//75; // time in seconds
 
 
 double wakeUpTimeHour = 0.005; // wakeup for next watering after XX hours
@@ -73,8 +75,25 @@ SMTPSession smtp;
 /* Callback function to get the Email sending status */
 void smtpCallback(SMTP_Status status);
 
+//initialize websocket connection
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+
+//define fixed IP adress of ESP
+IPAddress local_IP(192, 168, 0, 88);
+//it wil set the gateway static IP address 
+IPAddress gateway(192, 168, 0, 1);
+
+// Following three settings are optional
+IPAddress subnet(255, 255, 0, 0);
+IPAddress primaryDNS(8, 8, 8, 8); 
+IPAddress secondaryDNS(8, 8, 4, 4);
+
+AsyncWebSocketClient * globalClient = NULL;
+
+ 
  /*--------------------------------------------------------------
-   setuop block
+   setup block
    --------------------------------------------------------------*/
 
 void setup() {
@@ -168,7 +187,25 @@ void setup() {
       if (!smtp.connect(&session))
         return;
     }
-  
+
+ /*--------------------------------------------------------------
+   start websocket und server
+   --------------------------------------------------------------*/
+  if(!SPIFFS.begin()){
+     Serial.println("An Error has occurred while mounting SPIFFS");
+     return;
+  }
+
+ 
+  ws.onEvent(onWsEvent);
+  server.addHandler(&ws);
+ 
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/watering_system.html", "text/html");
+  });
+
+
+  server.begin();
     
 
  /*--------------------------------------------------------------
@@ -270,4 +307,111 @@ void smtpCallback(SMTP_Status status){
     }
     Serial.println("----------------\n");
   }
+}
+
+void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+ 
+  if(type == WS_EVT_CONNECT){
+ 
+    Serial.println("Websocket client connection received");
+    globalClient = client;
+    if(debug==1){
+    //ledcWrite(PWM_channel4,255);
+    }
+  } else if(type == WS_EVT_DISCONNECT){
+ 
+    Serial.println("Websocket client connection finished");
+    globalClient = NULL;
+    if(debug==1){
+   // ledcWrite(PWM_channel4,12);
+    }
+  }
+   else if(type == WS_EVT_DATA){
+   Serial.println("Data Received");
+   String dummy_data = (char*) data;
+   dummy_data = dummy_data.substring(0,len);
+   Serial.println(dummy_data); 
+   
+   
+     if (dummy_data.indexOf("Color") >= 0)
+    {
+      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1);
+      
+//      for(int i = 0; i < NLED; i++)
+//         {
+//          
+//          String buffer_data2=buffer_data.substring(buffer_data.indexOf("(")+1,buffer_data.indexOf("(")+4);
+//          Serial.println((buffer_data2));
+//          //ColorArray[i][0]=buffer_data2.toInt();
+//          buffer_data=buffer_data.substring(dummy_data.indexOf("(")+5);
+//          Serial.println(buffer_data2);
+//          //ColorArray[i][1]=buffer_data2.toInt();
+//          buffer_data2=buffer_data.substring(5,7);
+//          Serial.println(buffer_data2);
+//          //ColorArray[i][2]=buffer_data2.toInt();
+//          Serial.println("---------");
+//         }
+ //
+      long number = (long) strtol( &buffer_data[1], NULL, 16);
+      int colour_r = number >> 16;
+      int colour_g = number >> 8 & 0xFF;
+      int colour_b = number & 0xFF;
+      Serial.println(colour_r);
+      Serial.println(colour_g);
+      Serial.println(colour_b);
+      //for(int i = 0; i < NLED; i++)
+      //{
+       // ColorArray[i][0]=colour_r;
+       // ColorArray[i][1]=colour_g;
+       // ColorArray[i][2]=colour_b;
+      //}
+      //ColorChange=1;
+      //colour_hue = get_hue(colour_r,colour_g,colour_b);
+      //colour_saturation = get_saturation(colour_r,colour_g,colour_b);
+   }
+   if (dummy_data.indexOf("Aus") >= 0)
+    {
+     // Taster1Function();
+    }
+
+//    if (dummy_data.indexOf("Taster_2") >= 0)
+//    {
+//      Taster2Function();
+//    }
+//    if (dummy_data.indexOf("Taster_3") >= 0)
+//    {
+//      Taster3Function();
+//    }
+//    if (dummy_data.indexOf("Taster_4") >= 0)
+//    {
+//      Taster4Function();
+//    }
+
+//    if (dummy_data.indexOf("Store") >= 0)
+//    {
+//      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1);
+//      int number = buffer_data.toInt();
+//      EEPROM.write((number-2)*3,ColorArray[0][0]);
+//      EEPROM.write((number-2)*3+1,ColorArray[0][1]);
+//      EEPROM.write((number-2)*3+2,ColorArray[0][2]);
+//      EEPROM.commit();
+//   
+//      Serial.println("EEprom written:");
+//      int debug = 0;
+//      if(debug==1){
+//        Serial.println(EEPROM.read(0));
+//        Serial.println(EEPROM.read(1));
+//        Serial.println(EEPROM.read(2));
+//        Serial.println(EEPROM.read(3));
+//        Serial.println(EEPROM.read(4));
+//        Serial.println(EEPROM.read(5));
+//        Serial.println(EEPROM.read(6));
+//        Serial.println(EEPROM.read(7));
+//        Serial.println(EEPROM.read(8));
+//      } 
+//    }
+        
+     
+  }
+  
 }
