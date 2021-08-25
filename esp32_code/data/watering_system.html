@@ -8,40 +8,25 @@
                };
        
                ws.onmessage = function(evt) {
-                var rot= evt.data.substring(0, 3)
-                var rot_hex = Number(rot).toString(16);
-                if (rot_hex.length < 2) {
-                    rot_hex = "0" + rot_hex;
-                }
-                var gruen = evt.data.substring(4, 7)
-                var gruen_hex = Number(gruen).toString(16);
-                if (gruen_hex.length < 2) {
-                    gruen_hex = "0" + gruen_hex;
-                }
-                var blau= evt.data.substring(8, 11)
-                var blau_hex = Number(blau).toString(16);
-                if (blau_hex.length < 2) {
-                    blau_hex = "0" + blau_hex;
-                }
-                
-                var color = '#';
-                color = color.concat(rot_hex); 
-                color = color.concat(gruen_hex);
-                color = color.concat(blau_hex); 
-                  document.getElementById("display").innerHTML  = //"WebSocket-Status: " + 
-                  color;
+               var value1= evt.data.substring(0, 3) 
+               document.getElementById("auto_1").value = value1
 
+               var value2= evt.data.substring(4, 7) 
+               document.getElementById("auto_2").value = value2
 
-                  document.getElementById('SetRGB').style.background = color;
-                  colorPicker.color.hexString = color;
+               var value3= evt.data.substring(8, 11) 
+               document.getElementById("auto_TO").value = value3
 
-              };
+               var barrel = evt.data.substring(12, 14)
+               if(barrel == 0){
+                  document.getElementById('fill_level').style.background = '#00FF00';
+               } 
+               if(barrel == 1){
+                  document.getElementById('fill_level').style.background = '#FF0000';
+               } 
+            }
               </script>
             
-              <!-- Javascript Senden-->
-
-              <!--color pciker import ---------->
-              <script src="iro.min.js"></script>
              
         
   <style>
@@ -80,6 +65,7 @@ padding: 0;
    }
    /* Button */
    input.button {
+   -webkit-appearance: none;
     border: 1px solid #535353;
     background-color: #acacac;
     padding: 8px 10px;
@@ -87,7 +73,8 @@ padding: 0;
     width: 15%;
     height:10%;
     overflow: hidden;
-    font-size: 20px
+    font-size: 20px;
+    -webkit-border-radius: 0 0 0 0;
 }
 
 input.textinput {
@@ -135,36 +122,32 @@ input.textinput {
     }
     #fill_level{
        position: absolute;
-       top: 17%;
+       top: 10%;
        left: 45%;
-       height: 50px;
-      width: 50px;
+       height: 100px;
+      width: 100px;
       background-color: rgb(255, 0, 0);
+      border-color: black;
       border-radius: 50%;
       display: inline-block;
+      font-size: 25px;
+      text-align: center;
+      vertical-align: bottom;
     }
 
     #second_row{
        position: absolute;
-       top: 25%;
+       top: 30%;
        left: 10%;
        /*width: 20%;
        height: 10%;*/
        overflow: hidden; 
     }  
-    #display{
-       position: absolute;
-       top: 20%;
-       left: 10%;
-       /*width: 15%;
-       height: 10%;*/
-       /*overflow: hidden; */
-      font-size: 20px;
-    }
+  
 
     #auto_1{
        position: absolute;
-       top: 35%;
+       top: 40%;
        left: 10%;
        /*width: 15%;
        height: 10%;*/
@@ -173,28 +156,28 @@ input.textinput {
 
     #auto_2{
        position: absolute;
-       top: 35%;
+       top: 40%;
        left: 30%;
        overflow: hidden; 
     }
 
     #auto_TO{
        position: absolute;
-       top: 35%;
+       top: 40%;
        left: 50%;
        overflow: hidden; 
     }
 
     #auto_set{
        position: absolute;
-       top: 35%;
+       top: 40%;
        left: 75%;
        overflow: hidden; 
     }
 
     #third_row{
        position: absolute;
-       top: 45%;
+       top: 50%;
        left: 10%;
        /*width: 20%;
        height: 10%;*/
@@ -203,7 +186,7 @@ input.textinput {
 
     #manual_1{
        position: absolute;
-       top: 55%;
+       top: 60%;
        left: 10%;
        /*width: 15%;
        height: 10%;*/
@@ -212,14 +195,14 @@ input.textinput {
 
     #manual_2{
        position: absolute;
-       top: 55%;
+       top: 60%;
        left: 30%;
        overflow: hidden; 
     }
 
     #manual_set{
        position: absolute;
-       top: 55%;
+       top: 60%;
        left: 75%;
        overflow: hidden; 
     }
@@ -229,31 +212,14 @@ input.textinput {
 <!-- body ----------------xxxxxxxxxx----------------------- --> 
 <!-- body ----------------xxxxxxxxxx----------------------- -->    
 <body>  
-         
-
-
-
-<script type="text/javascript">    
-    document.getElementById('Speed').addEventListener('input', Geschwindigkeit);
-
- function Geschwindigkeit()
- {
-   var wert = document.getElementById('Speed').value;
-   var Message0 = "Speed_"
-   var Message = Message0.concat(wert);
-   ws.send(Message);
- }
- </script>
 
 <div id = first_row>
   <h1 id = "" class = "headline">Welcome to your green balkony</h1>
-  <p id = "" style="color:blue;font-size:18px;">
-    <span style="display:inline-block; width: 40%;"></span>
-    barrol level
+ 
 
 </div>
 
-<span id = "fill_level">  </span>
+<span id = "fill_level"> <br> barrel level </span>
 
 <!-- Buttons-->
 <br/><input type="button" id="stop" class="button" value="Stop" />
@@ -276,15 +242,15 @@ input.textinput {
 <!-- automatic mode-->
 <div id = second_row>
 <h1 id = "" class = "headline">automatic mode</h1>
-<p id = "" style="color:blue;font-size:18px;">
+<p id = "" style="color:blue;font-size:22px;">
   1 [s]
   <span style="display:inline-block; width: 20%;"></span>
   2 [s]
-  <span style="display:inline-block; width: 20%;"></span>
+  <span style="display:inline-block; width: 15%;"></span>
   Timeout [h]
 </div>
 
-<input type="text" id="auto_1" class="textinput"/>
+<input type="text" id="auto_1" class="textinput" value = "222"/>
 <!--<label for="auto_1">Name (4 to 8 characters):</label>-->
 <input type="text" id="auto_2" class="textinput"/>
 <input type="text" id="auto_TO" class="textinput"/>
@@ -304,7 +270,7 @@ input.textinput {
 
 <div id = third_row>
   <h1 id = "" class = "headline">manual mode</h1>
-  <p id = "" style="color:blue;font-size:18px;">
+  <p id = "" style="color:blue;font-size:22px;">
     1 [s]
     <span style="display:inline-block; width: 20%;"></span>
     2 [s]

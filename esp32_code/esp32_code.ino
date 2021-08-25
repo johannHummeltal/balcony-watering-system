@@ -57,6 +57,8 @@ int uSecToSec = 1000000;
 
 int wifiConnected = 0; //indicator if connection to WIFI was succesful(1) or not(0)
 
+int barrolEmpty =0;
+
 //define Wifi and E-Mail credentials
 /* are currently read from credentials.h
 #define ssid "XXX"
@@ -212,7 +214,7 @@ void setup() {
    measure if barrol is empty or not
    --------------------------------------------------------------*/
 
-  int barrolEmpty = digitalRead(fillsensor);
+  barrolEmpty = digitalRead(fillsensor);
   //Serial.print("Barrol Empty: ");
   //Serial.println(barrolEmpty);
   
@@ -318,6 +320,22 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     if(debug==1){
     //ledcWrite(PWM_channel4,255);
     }
+    //send initially set data to web client
+    String value1 = String (wateringTime1);
+    while(value1.length()<3){
+        value1 = '0' + value1;
+      }
+    String value2 = String (wateringTime2);
+    while(value2.length()<3){
+        value2 = '0' + value2;
+      }
+
+    String value3 = String (int(wakeUpTimeHour));
+    while(value3.length()<3){
+        value3 = '0' + value3;
+      }
+    String barrel = String(barrolEmpty);
+     globalClient->text(value1 + '_' + value2 + '_' + value3 + '_' + barrel);//delay(1000);
   } else if(type == WS_EVT_DISCONNECT){
  
     Serial.println("Websocket client connection finished");
