@@ -1,0 +1,394 @@
+<html>
+      <head>
+            <script type = "text/javascript">
+              var ws = new WebSocket("ws://192.168.0.234/ws");
+       
+              ws.onopen = function() {
+                  window.alert("Connected");
+               };
+       
+               ws.onmessage = function(evt) {
+                var rot= evt.data.substring(0, 3)
+                var rot_hex = Number(rot).toString(16);
+                if (rot_hex.length < 2) {
+                    rot_hex = "0" + rot_hex;
+                }
+                var gruen = evt.data.substring(4, 7)
+                var gruen_hex = Number(gruen).toString(16);
+                if (gruen_hex.length < 2) {
+                    gruen_hex = "0" + gruen_hex;
+                }
+                var blau= evt.data.substring(8, 11)
+                var blau_hex = Number(blau).toString(16);
+                if (blau_hex.length < 2) {
+                    blau_hex = "0" + blau_hex;
+                }
+                
+                var color = '#';
+                color = color.concat(rot_hex); 
+                color = color.concat(gruen_hex);
+                color = color.concat(blau_hex); 
+                  document.getElementById("display").innerHTML  = //"WebSocket-Status: " + 
+                  color;
+
+
+                  document.getElementById('SetRGB').style.background = color;
+                  colorPicker.color.hexString = color;
+
+              };
+              </script>
+            
+              <!-- Javascript Senden-->
+
+              <!--color pciker import ---------->
+              <script src="iro.min.js"></script>
+             
+        
+  <style>
+   /* normale Tags */
+   body {
+      top:0;
+      left:0;
+      margin:0;
+      padding:0;
+      position:fixed;
+      width: 90%;
+      height: 90%;
+      overflow: hidden;
+      top: 5%;
+      left: 5%;
+      background-color: #5dce5dd2;
+      /*overflow-y: hidden;
+      overflow-x: hidden;*/
+      font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+      color:#000;
+   }
+   * {
+margin: 0;
+padding: 0;
+/*overflow:hidden;*/ 
+}
+
+ 
+
+ /* eine Klasse */
+ .carini {
+     color:#fff;
+   }
+   p, a, .carini, #abc {
+     background-color: transparent;
+   }
+   /* Button */
+   input.button {
+    border: 1px solid #535353;
+    background-color: #acacac;
+    padding: 8px 10px;
+    color: #000;
+    width: 15%;
+    height:10%;
+    overflow: hidden;
+    font-size: 20px
+}
+
+input.textinput {
+    border: 1px solid #535353;
+    background-color: #ffffff;
+    padding: 8px 10px;
+    color: #000;
+    width: 15%;
+    height:10%;
+    overflow: hidden;
+    font-size: 20px
+}
+
+.headline{
+  font-size: 40px
+}
+/* Positionen----------------------------------------*/
+  
+
+
+#first_row{
+       position: absolute;
+       top: 0%;
+       left: 0%;
+       /*width: 20%;
+       height: 10%;*/
+       overflow: hidden; 
+    }  
+
+#stop{
+       position: absolute;
+       top: 15%;
+       left: 10%;
+       /*width: 20%;
+       height: 10%;*/
+       overflow: hidden; 
+    }
+    #stdby{
+       position: absolute;
+       top: 15%;
+       right: 10%;
+       /*width: 20%;
+       height: 10%;*/
+       overflow: hidden; 
+    }
+    #fill_level{
+       position: absolute;
+       top: 17%;
+       left: 45%;
+       height: 50px;
+      width: 50px;
+      background-color: rgb(255, 0, 0);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    #second_row{
+       position: absolute;
+       top: 25%;
+       left: 10%;
+       /*width: 20%;
+       height: 10%;*/
+       overflow: hidden; 
+    }  
+    #display{
+       position: absolute;
+       top: 20%;
+       left: 10%;
+       /*width: 15%;
+       height: 10%;*/
+       /*overflow: hidden; */
+      font-size: 20px;
+    }
+
+    #auto_1{
+       position: absolute;
+       top: 35%;
+       left: 10%;
+       /*width: 15%;
+       height: 10%;*/
+       overflow: hidden; 
+    }
+
+    #auto_2{
+       position: absolute;
+       top: 35%;
+       left: 30%;
+       overflow: hidden; 
+    }
+
+    #auto_TO{
+       position: absolute;
+       top: 35%;
+       left: 50%;
+       overflow: hidden; 
+    }
+
+    #auto_set{
+       position: absolute;
+       top: 35%;
+       left: 75%;
+       overflow: hidden; 
+    }
+
+    #third_row{
+       position: absolute;
+       top: 45%;
+       left: 10%;
+       /*width: 20%;
+       height: 10%;*/
+       overflow: hidden; 
+    } 
+
+    #manual_1{
+       position: absolute;
+       top: 55%;
+       left: 10%;
+       /*width: 15%;
+       height: 10%;*/
+       overflow: hidden; 
+    }
+
+    #manual_2{
+       position: absolute;
+       top: 55%;
+       left: 30%;
+       overflow: hidden; 
+    }
+
+    #manual_set{
+       position: absolute;
+       top: 55%;
+       left: 75%;
+       overflow: hidden; 
+    }
+  </style>
+   </head>
+
+<!-- body ----------------xxxxxxxxxx----------------------- --> 
+<!-- body ----------------xxxxxxxxxx----------------------- -->    
+<body>  
+         
+
+
+
+<script type="text/javascript">    
+    document.getElementById('Speed').addEventListener('input', Geschwindigkeit);
+
+ function Geschwindigkeit()
+ {
+   var wert = document.getElementById('Speed').value;
+   var Message0 = "Speed_"
+   var Message = Message0.concat(wert);
+   ws.send(Message);
+ }
+ </script>
+
+<div id = first_row>
+  <h1 id = "" class = "headline">Welcome to your green balkony</h1>
+  <p id = "" style="color:blue;font-size:18px;">
+    <span style="display:inline-block; width: 40%;"></span>
+    barrol level
+
+</div>
+
+<span id = "fill_level">  </span>
+
+<!-- Buttons-->
+<br/><input type="button" id="stop" class="button" value="Stdby" />
+
+<br/><input type="button" id="stdby" class="button" value="Stop" />
+
+<script type="text/javascript">
+  document.getElementById('Aus').addEventListener('click', stop_function);
+  function stop_function(){
+      ws.send("Aus");
+  }
+</script>
+
+
+<!-- automatic mode-->
+<div id = second_row>
+<h1 id = "" class = "headline">automatic mode</h1>
+<p id = "" style="color:blue;font-size:18px;">
+  1 [s]
+  <span style="display:inline-block; width: 20%;"></span>
+  2 [s]
+  <span style="display:inline-block; width: 20%;"></span>
+  Timeout [h]
+</div>
+
+<input type="text" id="auto_1" class="textinput"/>
+<!--<label for="auto_1">Name (4 to 8 characters):</label>-->
+<input type="text" id="auto_2" class="textinput"/>
+<input type="text" id="auto_TO" class="textinput"/>
+<input type="button" id="auto_set" class="button" value="SET/GO" />
+
+<div id = third_row>
+  <h1 id = "" class = "headline">manual mode</h1>
+  <p id = "" style="color:blue;font-size:18px;">
+    1 [s]
+    <span style="display:inline-block; width: 20%;"></span>
+    2 [s]
+  </div>
+  
+  <input type="text" id="manual_1" class="textinput"/>
+  <input type="text" id="manual_2" class="textinput"/>
+  <input type="button" id="manual_set" class="button" value="GO" />
+
+
+<script type="text/javascript">
+  var StoreBool = 0;
+  document.getElementById('Store').addEventListener('click', Store_function);
+  function Store_function(){
+      //ws.send("Taster_4");
+      if(StoreBool==0){
+      StoreBool = 1;
+      document.getElementById('Store').style.background = '#00FF00';
+      }else{
+      StoreBool = 0;
+      document.getElementById('Store').style.background = '#808080';
+      }
+
+      }
+      document.getElementById('Drei').addEventListener('click', Drei_function);
+      function Drei_function(){
+      if(StoreBool==0){
+      ws.send("Taster_4");
+      }else{
+        ws.send("Store_4");
+        StoreBool=0;
+        document.getElementById('Store').style.background = '#808080';
+      }
+  }
+
+  document.getElementById('Zwei').addEventListener('click', Zwei_function);
+      function Zwei_function(){
+      if(StoreBool==0){
+      ws.send("Taster_3");
+      }else{
+        ws.send("Store_3");
+        StoreBool=0;
+        document.getElementById('Store').style.background = '#808080';
+      }
+  }
+
+  document.getElementById('Eins').addEventListener('click', Eins_function);
+      function Eins_function(){
+      if(StoreBool==0){
+      ws.send("Taster_2");
+      }else{
+        ws.send("Store_2");
+        StoreBool=0;
+        document.getElementById('Store').style.background = '#808080';
+      }
+  }
+
+</script>
+
+
+<script type="text/javascript">
+  document.getElementById('SetRGB').addEventListener('click', RGB_color_function);
+  function RGB_color_function(){
+    var rot = document.getElementById('Rot').value;
+    var rot2 = 5;
+    var blau = document.getElementById('Blau').value;
+    var gruen = document.getElementById('Gruen').value;
+    //System.out.println(Integer.toHexString(10));
+   // var rot_hex = Integer.toHexString(3);
+    var rot_hex = Number(rot).toString(16);
+    if (rot_hex.length < 2) {
+       rot_hex = "0" + rot_hex;
+    }
+    var gruen_hex = Number(gruen).toString(16);
+    if (gruen_hex.length < 2) {
+       gruen_hex = "0" + gruen_hex;
+    }
+    var blau_hex = Number(blau).toString(16);
+    if (blau_hex.length < 2) {
+       blau_hex = "0" + blau_hex;
+    }
+    //var Message = "rgb(";
+    //Message = Message.concat(rot);
+    //Message = Message.concat(",");
+    //Message = Message.concat(gruen);
+    //Message = Message.concat(",");
+    //Message = Message.concat(blau);
+    //Message = Message.concat(")");
+    var Message = "#";
+    Message = Message.concat(rot_hex);
+    Message = Message.concat(gruen_hex);
+    Message = Message.concat(blau_hex);
+    //ws.send(Message);
+    document.getElementById('SetRGB').style.background = Message;
+    colorPicker.color.hexString=Message;
+  }
+</script>
+
+
+
+
+   </body>
+
+   </html>
