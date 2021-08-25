@@ -265,18 +265,11 @@ input.textinput {
  </script>
 
 <br/><input type="button" id="stdby" class="button" value="Stdby" />
-
 <script type="text/javascript">
-   document.getElementById('stdby').addEventListener('click', stop_function);
-   function stop_function(){
+   document.getElementById('stdby').addEventListener('click', stdby_function);
+   function stdby_function(){
        ws.send("stdby");
    }
-
-<script type="text/javascript">
-  document.getElementById('Aus').addEventListener('click', stop_function);
-  function stop_function(){
-      ws.send("Aus");
-  }
 </script>
 
 
@@ -297,6 +290,18 @@ input.textinput {
 <input type="text" id="auto_TO" class="textinput"/>
 <input type="button" id="auto_set" class="button" value="SET/GO" />
 
+<script type="text/javascript">
+   document.getElementById('auto_set').addEventListener('click', auto_function);
+   function auto_function(){
+      var value1 = document.getElementById('auto_1').value;
+      var value2 = document.getElementById('auto_2').value;
+      var value3 = document.getElementById('auto_TO').value;
+      var Message0 = "auto_"
+      var Message = Message0.concat(value1,'_',value2,'_',value3);
+   ws.send(Message);
+   }
+</script>
+
 <div id = third_row>
   <h1 id = "" class = "headline">manual mode</h1>
   <p id = "" style="color:blue;font-size:18px;">
@@ -308,6 +313,16 @@ input.textinput {
   <input type="text" id="manual_1" class="textinput"/>
   <input type="text" id="manual_2" class="textinput"/>
   <input type="button" id="manual_set" class="button" value="GO" />
+  <script type="text/javascript">
+   document.getElementById('manual_set').addEventListener('click', manual_function);
+   function manual_function(){
+      var value1 = document.getElementById('manual_1').value;
+      var value2 = document.getElementById('manual_2').value;
+      var Message0 = "manual_"
+      var Message = Message0.concat(value1,'_',value2);
+   ws.send(Message);
+   }
+</script>
 
 
 <script type="text/javascript">
