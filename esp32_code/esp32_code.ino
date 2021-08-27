@@ -55,6 +55,12 @@ int autoTime2 = 25;//75; // time in seconds
 int manualTime1 = 0;//120; //default values, later on read from EEPROM
 int manualTime2 = 0;//75; // time in seconds
 
+int wateringTime1 = autoTime1;//use either auto values or values from manual mode
+int wateringTime2 = autoTime2;
+
+int wateringActive = 0; //indicator if watering is currently running or stopped
+double wateringStartTime = 0; //store time when watering started
+
 double wakeUpTimeHour = 0.005; // wakeup for next watering after XX hours
 double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
 int uSecToSec = 1000000;
@@ -123,8 +129,8 @@ void setup() {
   digitalWrite(valve1, LOW);
   digitalWrite(valve2, LOW);
 
-  pinMode(Taster1, INPUT_PULLUP);
-  attachInterrupt(Taster1, Taster1Function, FALLING);
+  //pinMode(Taster1, INPUT_PULLUP);
+  //attachInterrupt(Taster1, Taster1Function, FALLING);
 
   pinMode(fillsensor, INPUT_PULLUP);
 
@@ -225,12 +231,13 @@ void setup() {
  autoTime2 = EEPROM.read(1);
  wakeUpTimeHour = EEPROM.read(2);
 
+ if(debug == 1){
  Serial.println("values:");
  Serial.println(autoTime1);
  Serial.println(autoTime2);
  Serial.println(wakeUpTimeHour);
- 
- double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
+ }
+ wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
  
 
  /*--------------------------------------------------------------
@@ -249,24 +256,17 @@ void setup() {
       /* Start sending Email and close the session */
       if (!MailClient.sendMail(&smtp, &message))
         Serial.println("Error sending Email, " + smtp.errorReason());
+      //shutdown ESP abnd reboot after given interval (check again if barrel is filled)
     }
+    goToSleep();
   }else{
+    //start automatic mode
     Serial.println("Barrol is filled, watering starts");
-    wateringFunction();
+    wateringActive = 1;
+    wateringStartTime = millis();
+    wateringTime1 = autoTime1;
+    wateringTime2 = autoTime2;
   }
-  Serial.print("Minutes until wake up: ");
-  Serial.println(wakeUpTimeMin);
-  uint64_t wakeUpTimeUS = wakeUpTimeMin*60*uSecToSec;
-  esp_sleep_enable_timer_wakeup(1ULL * wakeUpTimeMin * 60*uSecToSec);
-  //send ESP to deep sleep (configure ports to stay low before
-  Serial.println("Go to sleep"); 
-  //ensure pins stay low in deep sleep (both FET and both Hogwarts LEDs)
-  gpio_hold_en(GPIO_NUM_21);
-  gpio_hold_en(GPIO_NUM_23);
-  gpio_hold_en(GPIO_NUM_32);
-  gpio_deep_sleep_hold_en();
-  esp_deep_sleep_start();
-  Serial.println("ESP is sleeping");
 }
 
 
@@ -276,19 +276,38 @@ void setup() {
    --------------------------------------------------------------*/
 
 void loop() {
-  if(Taster1Pushed == 1){
-     wateringFunction();
+  if(wateringActive==1){
+     int wateringPeriod = (millis() - wateringStartTime)/1000; //time since watering started in s
+     if(debug == 1){
+      Serial.print("watering active for " );
+      Serial.println(wateringPeriod);
+     }
+     if(wateringPeriod>0 && wateringPeriod <= wateringTime1){
+      digitalWrite(pump,HIGH);
+      digitalWrite(valve1,HIGH);
+      digitalWrite(valve2,LOW);
+     }else if(wateringPeriod>wateringTime1 && wateringPeriod <= wateringTime2){
+      digitalWrite(pump,HIGH);
+      digitalWrite(valve1,LOW);
+      digitalWrite(valve2,HIGH);
+     }else if(wateringPeriod>wateringTime2){
+      digitalWrite(pump,LOW);
+      digitalWrite(valve1,LOW);
+      digitalWrite(valve2,LOW);
+      wateringActive = 0;
+     }
   }
+  //shutdown ESP after defined time when watering is not active and websocketr is not connected
+  if(wateringActive == 0){
+    goToSleep();
+  }
+  
+  delay(1000);
 }
 
  /*--------------------------------------------------------------
    define necesarry functions
    --------------------------------------------------------------*/
-
-void Taster1Function() {
-  Serial.println("Taster1 pushed");
-  Taster1Pushed = 1;
-}
 
 void wateringFunction(){
   Serial.println("Pump started");
@@ -305,6 +324,25 @@ void wateringFunction(){
     digitalWrite(valve2, LOW);
     Serial.println("Pump stopped");
     Taster1Pushed = 0;
+}
+
+void goToSleep(){
+  digitalWrite(pump,LOW);
+  digitalWrite(valve1,LOW);
+  digitalWrite(valve2,LOW);
+  Serial.print("Minutes until wake up: ");
+  Serial.println(wakeUpTimeMin);
+  uint64_t wakeUpTimeUS = wakeUpTimeMin*60*uSecToSec;
+  esp_sleep_enable_timer_wakeup(1ULL * wakeUpTimeMin * 60*uSecToSec);
+  //send ESP to deep sleep (configure ports to stay low before
+  Serial.println("Go to sleep"); 
+  //ensure pins stay low in deep sleep (both FET and both Hogwarts LEDs)
+  gpio_hold_en(GPIO_NUM_21);
+  gpio_hold_en(GPIO_NUM_23);
+  gpio_hold_en(GPIO_NUM_32);
+  gpio_deep_sleep_hold_en();
+  esp_deep_sleep_start();
+  Serial.println("ESP is sleeping");//won't be printed if every worked out
 }
 
 /* Callback function to get the Email sending status */
@@ -375,6 +413,15 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
    dummy_data = dummy_data.substring(0,len);
    Serial.println(dummy_data); 
    
+     if (dummy_data.indexOf("stop") >= 0){
+      wateringActive = 0;
+      digitalWrite(pump,LOW);
+      digitalWrite(valve1,LOW);
+      digitalWrite(valve2,LOW);
+     }
+     if (dummy_data.indexOf("stdby") >= 0){
+      goToSleep();
+     }
    
      if (dummy_data.indexOf("auto") >= 0)
     {
@@ -410,10 +457,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       autoTime1 = value1;
       autoTime2 = value2;
       wakeUpTimeHour = value3;
-      
+      wakeUpTimeMin = wakeUpTimeHour * 60;
    }
         
      
   }
+
+
   
 }

@@ -276,8 +276,8 @@ input.textinput {
     2 [s]
   </div>
   
-  <input type="text" id="manual_1" class="textinput"/>
-  <input type="text" id="manual_2" class="textinput"/>
+  <input type="text" id="manual_1" class="textinput" value = "0"/>
+  <input type="text" id="manual_2" class="textinput" value = "0"/>
   <input type="button" id="manual_set" class="button" value="GO" />
   <script type="text/javascript">
    document.getElementById('manual_set').addEventListener('click', manual_function);
@@ -285,7 +285,7 @@ input.textinput {
       var value1 = document.getElementById('manual_1').value;
       var value2 = document.getElementById('manual_2').value;
       var Message0 = "manual_"
-      var Message = Message0.concat(value1,'_',value2);
+      var Message = Message0.concat(value1,'*',value2);
    ws.send(Message);
    }
 </script>
