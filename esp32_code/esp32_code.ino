@@ -20,6 +20,7 @@
 #include <ESP_Mail_Client.h>
 #include "ESPAsyncWebServer.h"
 #include "SPIFFS.h"
+#include <EEPROM.h>
 #include <credentials.h> //in this file credentials for wifi and E-mail are stored
 //you can either define them below directly in the code or create an own credentials.h file
 
@@ -40,16 +41,19 @@ int Taster1Pushed = 0;
 
 
 //declare some variable
-int debug = 0; //set debug level; 1== print additional serial messages
+int debug = 1; //set debug level; 1== print additional serial messages
 //moisture sensor (optional, not yet realized)
 int minMoisture = 2343; // value for a completely try sensor (in air)
 int maxMoisture = 321; // sensor in water
 int moisture1 = 0; // raw measurement value of sensor 1
 
-//define watering times
-int wateringTime1 = 20;//120; //time in seconds
-int wateringTime2 = 25;//75; // time in seconds
+//define watering times for automatic mode
+int autoTime1 = 20;//120; //default values, later on read from EEPROM
+int autoTime2 = 25;//75; // time in seconds
 
+//define watering times for manual mode
+int manualTime1 = 0;//120; //default values, later on read from EEPROM
+int manualTime2 = 0;//75; // time in seconds
 
 double wakeUpTimeHour = 0.005; // wakeup for next watering after XX hours
 double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
@@ -58,6 +62,8 @@ int uSecToSec = 1000000;
 int wifiConnected = 0; //indicator if connection to WIFI was succesful(1) or not(0)
 
 int barrolEmpty =0;
+
+int eeprom_size = 3;
 
 //define Wifi and E-Mail credentials
 /* are currently read from credentials.h
@@ -208,7 +214,24 @@ void setup() {
 
 
   server.begin();
-    
+
+
+  /*--------------------------------------------------------------
+   start EEPROM and read values
+   --------------------------------------------------------------*/
+ EEPROM.begin(eeprom_size);
+ 
+ autoTime1 = EEPROM.read(0);
+ autoTime2 = EEPROM.read(1);
+ wakeUpTimeHour = EEPROM.read(2);
+
+ Serial.println("values:");
+ Serial.println(autoTime1);
+ Serial.println(autoTime2);
+ Serial.println(wakeUpTimeHour);
+ 
+ double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
+ 
 
  /*--------------------------------------------------------------
    measure if barrol is empty or not
@@ -246,6 +269,8 @@ void setup() {
   Serial.println("ESP is sleeping");
 }
 
+
+
  /*--------------------------------------------------------------
    loop 
    --------------------------------------------------------------*/
@@ -270,11 +295,11 @@ void wateringFunction(){
     digitalWrite(pump, HIGH);
     digitalWrite(valve1, HIGH);
     Serial.println("valve 1 switched on");
-    delay(wateringTime1 * 1000);
+    delay(autoTime1 * 1000);
     digitalWrite(valve1, LOW);
     digitalWrite(valve2, HIGH);
     Serial.println("valve 2 switched on");
-    delay(wateringTime2 * 1000);
+    delay(autoTime2 * 1000);
     digitalWrite(pump,LOW);
     digitalWrite(valve1, LOW);
     digitalWrite(valve2, LOW);
@@ -321,11 +346,11 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     //ledcWrite(PWM_channel4,255);
     }
     //send initially set data to web client
-    String value1 = String (wateringTime1);
+    String value1 = String (autoTime1);
     while(value1.length()<3){
         value1 = '0' + value1;
       }
-    String value2 = String (wateringTime2);
+    String value2 = String (autoTime2);
     while(value2.length()<3){
         value2 = '0' + value2;
       }
@@ -351,83 +376,42 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
    Serial.println(dummy_data); 
    
    
-     if (dummy_data.indexOf("Color") >= 0)
+     if (dummy_data.indexOf("auto") >= 0)
     {
-      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1);
+      Serial.println("auto message detected");
+      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1,dummy_data.indexOf("*"));
+      Serial.println(buffer_data);
+      int value1 = buffer_data.toInt();
+      buffer_data = dummy_data.substring(dummy_data.indexOf("*")+1,dummy_data.indexOf("/"));
+      Serial.println(buffer_data);
+      int value2 = buffer_data.toInt();
+      buffer_data = dummy_data.substring(dummy_data.indexOf("/")+1);
+      Serial.println(buffer_data);
+      int value3 = buffer_data.toInt();
+      if(debug == 1){
+        Serial.print("Value1: ");
+        Serial.println(value1);
+        Serial.print("Value2: ");
+        Serial.println(value2);
+        Serial.print("Value3: ");
+        Serial.println(value3);
+      }
+      //write values to EEPROM for future use
+      EEPROM.write(0,value1);
+      EEPROM.write(1,value2);
+      EEPROM.write(2,value3);
+      EEPROM.commit();
+      if(debug==1){
+        Serial.println("EEPROM written:");
+        Serial.println(EEPROM.read(0));
+        Serial.println(EEPROM.read(1));
+        Serial.println(EEPROM.read(2));
+      }
+      autoTime1 = value1;
+      autoTime2 = value2;
+      wakeUpTimeHour = value3;
       
-//      for(int i = 0; i < NLED; i++)
-//         {
-//          
-//          String buffer_data2=buffer_data.substring(buffer_data.indexOf("(")+1,buffer_data.indexOf("(")+4);
-//          Serial.println((buffer_data2));
-//          //ColorArray[i][0]=buffer_data2.toInt();
-//          buffer_data=buffer_data.substring(dummy_data.indexOf("(")+5);
-//          Serial.println(buffer_data2);
-//          //ColorArray[i][1]=buffer_data2.toInt();
-//          buffer_data2=buffer_data.substring(5,7);
-//          Serial.println(buffer_data2);
-//          //ColorArray[i][2]=buffer_data2.toInt();
-//          Serial.println("---------");
-//         }
- //
-      long number = (long) strtol( &buffer_data[1], NULL, 16);
-      int colour_r = number >> 16;
-      int colour_g = number >> 8 & 0xFF;
-      int colour_b = number & 0xFF;
-      Serial.println(colour_r);
-      Serial.println(colour_g);
-      Serial.println(colour_b);
-      //for(int i = 0; i < NLED; i++)
-      //{
-       // ColorArray[i][0]=colour_r;
-       // ColorArray[i][1]=colour_g;
-       // ColorArray[i][2]=colour_b;
-      //}
-      //ColorChange=1;
-      //colour_hue = get_hue(colour_r,colour_g,colour_b);
-      //colour_saturation = get_saturation(colour_r,colour_g,colour_b);
    }
-   if (dummy_data.indexOf("Aus") >= 0)
-    {
-     // Taster1Function();
-    }
-
-//    if (dummy_data.indexOf("Taster_2") >= 0)
-//    {
-//      Taster2Function();
-//    }
-//    if (dummy_data.indexOf("Taster_3") >= 0)
-//    {
-//      Taster3Function();
-//    }
-//    if (dummy_data.indexOf("Taster_4") >= 0)
-//    {
-//      Taster4Function();
-//    }
-
-//    if (dummy_data.indexOf("Store") >= 0)
-//    {
-//      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1);
-//      int number = buffer_data.toInt();
-//      EEPROM.write((number-2)*3,ColorArray[0][0]);
-//      EEPROM.write((number-2)*3+1,ColorArray[0][1]);
-//      EEPROM.write((number-2)*3+2,ColorArray[0][2]);
-//      EEPROM.commit();
-//   
-//      Serial.println("EEprom written:");
-//      int debug = 0;
-//      if(debug==1){
-//        Serial.println(EEPROM.read(0));
-//        Serial.println(EEPROM.read(1));
-//        Serial.println(EEPROM.read(2));
-//        Serial.println(EEPROM.read(3));
-//        Serial.println(EEPROM.read(4));
-//        Serial.println(EEPROM.read(5));
-//        Serial.println(EEPROM.read(6));
-//        Serial.println(EEPROM.read(7));
-//        Serial.println(EEPROM.read(8));
-//      } 
-//    }
         
      
   }
