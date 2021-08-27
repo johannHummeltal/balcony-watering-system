@@ -66,10 +66,14 @@ double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
 int uSecToSec = 1000000;
 
 int wifiConnected = 0; //indicator if connection to WIFI was succesful(1) or not(0)
+int wsConnected = 0;
 
 int barrolEmpty =0;
 
 int eeprom_size = 3;
+
+int TimeoutWifi = 30; //time in s which is waited until shutdown in case of inactivity (web inputs are than still possible)
+int shutdownTimer = 0;
 
 //define Wifi and E-Mail credentials
 /* are currently read from credentials.h
@@ -203,7 +207,7 @@ void setup() {
     }
 
  /*--------------------------------------------------------------
-   start websocket und server
+   start websocket und server and file system
    --------------------------------------------------------------*/
   if(!SPIFFS.begin()){
      Serial.println("An Error has occurred while mounting SPIFFS");
@@ -258,6 +262,7 @@ void setup() {
         Serial.println("Error sending Email, " + smtp.errorReason());
       //shutdown ESP abnd reboot after given interval (check again if barrel is filled)
     }
+    delay(30000);//wait for 30s in case a ws connection should be established
     goToSleep();
   }else{
     //start automatic mode
@@ -286,20 +291,22 @@ void loop() {
       digitalWrite(pump,HIGH);
       digitalWrite(valve1,HIGH);
       digitalWrite(valve2,LOW);
-     }else if(wateringPeriod>wateringTime1 && wateringPeriod <= wateringTime2){
+     }else if(wateringPeriod>wateringTime1 && wateringPeriod <= (wateringTime2+wateringTime1)){
       digitalWrite(pump,HIGH);
       digitalWrite(valve1,LOW);
       digitalWrite(valve2,HIGH);
-     }else if(wateringPeriod>wateringTime2){
+     }else if(wateringPeriod>(wateringTime2+wateringTime1)){
       digitalWrite(pump,LOW);
       digitalWrite(valve1,LOW);
       digitalWrite(valve2,LOW);
       wateringActive = 0;
      }
   }
-  //shutdown ESP after defined time when watering is not active and websocketr is not connected
+  //shutdown ESP if watering is not active and websocketr is not connected
   if(wateringActive == 0){
-    goToSleep();
+    if(wsConnected ==0){
+      goToSleep();
+    }
   }
   
   delay(1000);
@@ -377,8 +384,9 @@ void smtpCallback(SMTP_Status status){
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
  
   if(type == WS_EVT_CONNECT){
- 
+    
     Serial.println("Websocket client connection received");
+    wsConnected = 1;
     globalClient = client;
     if(debug==1){
     //ledcWrite(PWM_channel4,255);
@@ -402,6 +410,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
   } else if(type == WS_EVT_DISCONNECT){
  
     Serial.println("Websocket client connection finished");
+    wsConnected = 0;
     globalClient = NULL;
     if(debug==1){
    // ledcWrite(PWM_channel4,12);
@@ -456,13 +465,36 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       }
       autoTime1 = value1;
       autoTime2 = value2;
+      wateringTime1 = autoTime1;
+      wateringTime2 = autoTime2;
       wakeUpTimeHour = value3;
       wakeUpTimeMin = wakeUpTimeHour * 60;
+      wateringActive = 1;
+      wateringStartTime = millis();
    }
-        
+     if (dummy_data.indexOf("manual") >= 0)
+    {
+      Serial.println("manual message detected");
+      String buffer_data = dummy_data.substring(dummy_data.indexOf("_")+1,dummy_data.indexOf("*"));
+      Serial.println(buffer_data);
+      int value1 = buffer_data.toInt();
+      buffer_data = dummy_data.substring(dummy_data.indexOf("*")+1);
+      Serial.println(buffer_data);
+      int value2 = buffer_data.toInt();
+      if(debug == 1){
+        Serial.print("Value1: ");
+        Serial.println(value1);
+        Serial.print("Value2: ");
+        Serial.println(value2);
+      }
+      manualTime1 = value1;
+      manualTime2 = value2;
+      wateringTime1 = manualTime1;
+      wateringTime2 = manualTime2;
+      wateringActive = 1;
+      wateringStartTime = millis();
+   }   
      
-  }
-
-
+   }
   
 }
