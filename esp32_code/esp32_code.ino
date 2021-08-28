@@ -1,8 +1,10 @@
-/* watering 1 and 2 (one after the other) for respective given time
+/* watering strand 1 and strand 2 (one after the other) for respective given time
 //watering is started when ESP is powered on
 //ESP goes to sleep after watering is finished --> reboot or repower ESP to start again
-//ESP wakes up after defined time (e.g. 12 hours) when not powered down
-//ESP sends mail if the barrol is empty
+//ESP wakes up after defined time (e.g. 12 hours) if it is not powered down
+//ESP sends mail if the barrel is empty
+//ESP provides a web-interface for set up and remote control of manual operation
+  // go to IP adress of ESP with your browser
 */
 
 /* Disclaimer
@@ -16,6 +18,7 @@
   Example adapted from: https://github.com/mobizt/ESP-Mail-Client
 */
 
+//include packages
 #include <WiFi.h>
 #include <ESP_Mail_Client.h>
 #include "ESPAsyncWebServer.h"
@@ -24,23 +27,25 @@
 #include <credentials.h> //in this file credentials for wifi and E-mail are stored
 //you can either define them below directly in the code or create an own credentials.h file
 
-// define pins
+ 
+ /*--------------------------------------------------------------
+   define pins
+   --------------------------------------------------------------*/
 #define pump 21
-//watering circuit #1
-#define valve1 23
-#define sensor1 34
-//watering circuit #2
-#define valve2 32
+#define valve1 23 //watering strand 1
+#define valve2 32 //strand 2
 
-//sensor to check if the barrol is empty
+//level sensor to check if the barrol is empty 
 #define fillsensor 15//4
 
-//manually start the watering (if ESP is not a sleep, so far only used for debugging)
+//manually start the watering (if ESP is not a sleep, so far only used for debugging, not implemented any longer)
 #define Taster1 12//12
-int Taster1Pushed = 0; 
 
 
-//declare some variable
+ 
+ /*--------------------------------------------------------------
+   declare and intialize variables
+   --------------------------------------------------------------*/
 int debug = 1; //set debug level; 1== print additional serial messages
 //moisture sensor (optional, not yet realized)
 int minMoisture = 2343; // value for a completely try sensor (in air)
@@ -66,14 +71,14 @@ double wakeUpTimeMin = wakeUpTimeHour*60; //time in min between two waterings
 int uSecToSec = 1000000;
 
 int wifiConnected = 0; //indicator if connection to WIFI was succesful(1) or not(0)
-int wsConnected = 0;
+//if Wifi is not available, the basic function will still be working (except for E-Mail and web-interface)
+
+int wsConnected = 0; // indicator if websocket connection from web-interface is active
 
 int barrolEmpty =0;
 
 int eeprom_size = 3;
 
-int TimeoutWifi = 30; //time in s which is waited until shutdown in case of inactivity (web inputs are than still possible)
-int shutdownTimer = 0;
 
 //define Wifi and E-Mail credentials
 /* are currently read from credentials.h
@@ -85,28 +90,22 @@ int shutdownTimer = 0;
 #define recipient_email2 "XXX@gmail.com"
 */
 
+//setup mail connection 
 #define SMTP_HOST "smtp.gmail.com"
 #define SMTP_PORT 465
-
 /* The SMTP Session object used for Email sending */
 SMTPSession smtp;
 /* Callback function to get the Email sending status */
 void smtpCallback(SMTP_Status status);
 
-//initialize websocket connection
+
+//initialize websocket connection and define static IP
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-
 //define fixed IP adress of ESP
-IPAddress local_IP(192, 168, 0, 88);
+IPAddress local_IP(192, 168, 0, 17);
 //it wil set the gateway static IP address 
 IPAddress gateway(192, 168, 0, 1);
-
-// Following three settings are optional
-IPAddress subnet(255, 255, 0, 0);
-IPAddress primaryDNS(8, 8, 8, 8); 
-IPAddress secondaryDNS(8, 8, 4, 4);
-
 AsyncWebSocketClient * globalClient = NULL;
 
  
@@ -125,7 +124,7 @@ void setup() {
   //define pin modes
   pinMode(pump, OUTPUT);
   pinMode(valve1, OUTPUT);
-  pinMode(sensor1, INPUT);
+  //pinMode(sensor1, INPUT);
 
   pinMode(valve2, OUTPUT);
   
@@ -135,10 +134,8 @@ void setup() {
 
   //pinMode(Taster1, INPUT_PULLUP);
   //attachInterrupt(Taster1, Taster1Function, FALLING);
-
   pinMode(fillsensor, INPUT_PULLUP);
 
-  
   /*--------------------------------------------------------------
   setup Wifi connection
    --------------------------------------------------------------*/
@@ -164,18 +161,16 @@ void setup() {
     Serial.println("WIFI connection failed; continuing without internet connection.");
   }
 
+ 
+
   /*--------------------------------------------------------------
    setup Mail server connection 
    --------------------------------------------------------------*/
-
     smtp.debug(0);
-  
     /* Set the callback function to get the sending results */
     smtp.callback(smtpCallback);
-  
     /* Declare the session config data */
     ESP_Mail_Session session;
-  
     /* Set the session config */
     session.server.host_name = SMTP_HOST;
     session.server.port = SMTP_PORT;
@@ -189,7 +184,7 @@ void setup() {
     /* Set the message headers */
     message.sender.name = "ESP";
     message.sender.email = author_email;
-    message.subject = "Fass bitte auffüllen!!";
+    message.subject = "Refill Barrel!!";
     message.addRecipient("ESP", recipient_email);
     message.addRecipient("ESP", recipient_email2);
   
@@ -199,7 +194,6 @@ void setup() {
     message.html.content = htmlMsg.c_str();
     message.text.charSet = "us-ascii";
     message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
-  
     /* Connect to server with the session config */
     if(wifiConnected == 1){
       if (!smtp.connect(&session))
@@ -213,15 +207,11 @@ void setup() {
      Serial.println("An Error has occurred while mounting SPIFFS");
      return;
   }
-
- 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
- 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/watering_system.html", "text/html");
   });
-
 
   server.begin();
 
@@ -246,8 +236,10 @@ void setup() {
 
  /*--------------------------------------------------------------
    measure if barrol is empty or not
-   --------------------------------------------------------------*/
 
+   send email if barrel is empty
+   set up watering if barrel is filled
+   --------------------------------------------------------------*/
   barrolEmpty = digitalRead(fillsensor);
   //Serial.print("Barrol Empty: ");
   //Serial.println(barrolEmpty);
@@ -316,24 +308,8 @@ void loop() {
    define necesarry functions
    --------------------------------------------------------------*/
 
-void wateringFunction(){
-  Serial.println("Pump started");
-    digitalWrite(pump, HIGH);
-    digitalWrite(valve1, HIGH);
-    Serial.println("valve 1 switched on");
-    delay(autoTime1 * 1000);
-    digitalWrite(valve1, LOW);
-    digitalWrite(valve2, HIGH);
-    Serial.println("valve 2 switched on");
-    delay(autoTime2 * 1000);
-    digitalWrite(pump,LOW);
-    digitalWrite(valve1, LOW);
-    digitalWrite(valve2, LOW);
-    Serial.println("Pump stopped");
-    Taster1Pushed = 0;
-}
-
 void goToSleep(){
+  //send ESP to deep sleep; set all Pins to LOW before
   digitalWrite(pump,LOW);
   digitalWrite(valve1,LOW);
   digitalWrite(valve2,LOW);
@@ -341,7 +317,7 @@ void goToSleep(){
   Serial.println(wakeUpTimeMin);
   uint64_t wakeUpTimeUS = wakeUpTimeMin*60*uSecToSec;
   esp_sleep_enable_timer_wakeup(1ULL * wakeUpTimeMin * 60*uSecToSec);
-  //send ESP to deep sleep (configure ports to stay low before
+  
   Serial.println("Go to sleep"); 
   //ensure pins stay low in deep sleep (both FET and both Hogwarts LEDs)
   gpio_hold_en(GPIO_NUM_21);
@@ -351,6 +327,7 @@ void goToSleep(){
   esp_deep_sleep_start();
   Serial.println("ESP is sleeping");//won't be printed if every worked out
 }
+
 
 /* Callback function to get the Email sending status */
 void smtpCallback(SMTP_Status status){
@@ -381,6 +358,7 @@ void smtpCallback(SMTP_Status status){
   }
 }
 
+//handling of websocket events and commands from web interface
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
  
   if(type == WS_EVT_CONNECT){

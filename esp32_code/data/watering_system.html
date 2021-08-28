@@ -1,7 +1,14 @@
 <html>
+   <!-- web interface for setup and control of balcony watering system
+   connection to ESP via websocket
+   messages can be received from ESP (currently set values in storage of EEPROM are displayed in webinterface + fill level of the barrel)
+   messages are sent to ESP for setting values for automatic and manual mode and to start or stop watering or to send ESP to sleep 
+-->
       <head>
+
             <script type = "text/javascript">
-              var ws = new WebSocket("ws://192.168.0.88/ws");
+               // establish webSocket connection and receive data which is sent by ESP
+              var ws = new WebSocket("ws://192.168.0.17/ws");
        
               ws.onopen = function() {
                   window.alert("Connected");
@@ -30,7 +37,7 @@
              
         
   <style>
-   /* normale Tags */
+   /* define style and location of all displayed objects*/
    body {
       top:0;
       left:0;
@@ -51,7 +58,6 @@
    * {
 margin: 0;
 padding: 0;
-/*overflow:hidden;*/ 
 }
 
  
@@ -92,8 +98,6 @@ input.textinput {
   font-size: 40px
 }
 /* Positionen----------------------------------------*/
-  
-
 
 #first_row{
        position: absolute;
@@ -219,11 +223,12 @@ input.textinput {
 
 </div>
 
-<span id = "fill_level"> <br> barrel level </span>
-
-<!-- Buttons-->
+<!-- Buttons for stop and standby and indicator for barrel level-->
+<span id = "fill_level"> <br> barrel level </span> <!--circle indicator for fill level-->
 <br/><input type="button" id="stop" class="button" value="Stop" />
+
 <script type="text/javascript">
+   //script for sending the websocket messages
    document.getElementById('stop').addEventListener('click', stop_function);
    function stop_function(){
        ws.send("stop");
@@ -263,6 +268,8 @@ input.textinput {
       var value2 = document.getElementById('auto_2').value;
       var value3 = document.getElementById('auto_TO').value;
       var Message0 = "auto_"
+      //concat the 3 values from the 3 textinputs
+      // different chars _,*,/ are used to identify where which value is encoded in the string
       var Message = Message0.concat(value1,'*',value2,'/',value3);
    ws.send(Message);
    }
@@ -289,98 +296,6 @@ input.textinput {
    ws.send(Message);
    }
 </script>
-
-
-<script type="text/javascript">
-  var StoreBool = 0;
-  document.getElementById('Store').addEventListener('click', Store_function);
-  function Store_function(){
-      //ws.send("Taster_4");
-      if(StoreBool==0){
-      StoreBool = 1;
-      document.getElementById('Store').style.background = '#00FF00';
-      }else{
-      StoreBool = 0;
-      document.getElementById('Store').style.background = '#808080';
-      }
-
-      }
-      document.getElementById('Drei').addEventListener('click', Drei_function);
-      function Drei_function(){
-      if(StoreBool==0){
-      ws.send("Taster_4");
-      }else{
-        ws.send("Store_4");
-        StoreBool=0;
-        document.getElementById('Store').style.background = '#808080';
-      }
-  }
-
-  document.getElementById('Zwei').addEventListener('click', Zwei_function);
-      function Zwei_function(){
-      if(StoreBool==0){
-      ws.send("Taster_3");
-      }else{
-        ws.send("Store_3");
-        StoreBool=0;
-        document.getElementById('Store').style.background = '#808080';
-      }
-  }
-
-  document.getElementById('Eins').addEventListener('click', Eins_function);
-      function Eins_function(){
-      if(StoreBool==0){
-      ws.send("Taster_2");
-      }else{
-        ws.send("Store_2");
-        StoreBool=0;
-        document.getElementById('Store').style.background = '#808080';
-      }
-  }
-
-</script>
-
-
-<script type="text/javascript">
-  document.getElementById('SetRGB').addEventListener('click', RGB_color_function);
-  function RGB_color_function(){
-    var rot = document.getElementById('Rot').value;
-    var rot2 = 5;
-    var blau = document.getElementById('Blau').value;
-    var gruen = document.getElementById('Gruen').value;
-    //System.out.println(Integer.toHexString(10));
-   // var rot_hex = Integer.toHexString(3);
-    var rot_hex = Number(rot).toString(16);
-    if (rot_hex.length < 2) {
-       rot_hex = "0" + rot_hex;
-    }
-    var gruen_hex = Number(gruen).toString(16);
-    if (gruen_hex.length < 2) {
-       gruen_hex = "0" + gruen_hex;
-    }
-    var blau_hex = Number(blau).toString(16);
-    if (blau_hex.length < 2) {
-       blau_hex = "0" + blau_hex;
-    }
-    //var Message = "rgb(";
-    //Message = Message.concat(rot);
-    //Message = Message.concat(",");
-    //Message = Message.concat(gruen);
-    //Message = Message.concat(",");
-    //Message = Message.concat(blau);
-    //Message = Message.concat(")");
-    var Message = "#";
-    Message = Message.concat(rot_hex);
-    Message = Message.concat(gruen_hex);
-    Message = Message.concat(blau_hex);
-    //ws.send(Message);
-    document.getElementById('SetRGB').style.background = Message;
-    colorPicker.color.hexString=Message;
-  }
-</script>
-
-
-
 
    </body>
 
