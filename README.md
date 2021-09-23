@@ -7,4 +7,6 @@ You would like to have a green oasis on your balkony but you are tired of carryi
 In the current status of the project the system can automatically water up to 4 strands independently. I created a web interface with which you can connect to the uC via wifi and adjust your system just right for your plants needs. 
 Future features which are not yet realized include a soil moisture sensor which e.g. can detect if it was raining and the plants don't need to be watered.
 
-#hardware
+## hardware
+<img src="./pictures/hardware.jpg" width="500">
+<img src="./pictures/pump_barrel_valves.png" width="500">
