@@ -9,7 +9,7 @@ Future features which are not yet realized include a soil moisture sensor which 
 
 ## Hardware
 <img src="./pictures/pump_barrel_valves.png" width="500">
-As central water storage I used a old barrel I found on the attic (according to the labeling it seemed to have been udes for schnapps before;) ). 
+The pump drives the atering system and its outlet is connected to a valve. 
 
 ## Electronics
 
