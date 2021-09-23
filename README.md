@@ -9,8 +9,13 @@ Future features which are not yet realized include a soil moisture sensor which 
 
 ## Hardware
 <img src="./pictures/pump_barrel_valves.png" width="500">
-The central water storage of the system is an old barrel (120l) which I found on the attic (according to the label it seemed to have been used for schnapps previously;) ). A <a href="https://www.amazon.de/gp/product/B001CV02U4/ref=ppx_yo_dt_b_asin_title_o09_s00?ie=UTF8&psc=1/" target="_blank">submersible 12V pump</a> is floating inside the barrel. The pump drives the watering system and its outlet is connected to a valve. 
+The central water storage of the system is an old barrel (120l) which I found on the attic (according to the label it seemed to have been used for schnapps previously;) ). The barrol is attached to the rain-gutter of the nearby roof. So if you are lucky and it is raining sufficiently you do not even need to refill the barrel manually. If this however is not the case, I integrated a level sensor. It indicates if the barrel is empty and the uC send an E-mail to the user requesting to refill the barell. 
 
+A <a href="https://www.amazon.de/gp/product/B001CV02U4/ref=ppx_yo_dt_b_asin_title_o09_s00?ie=UTF8&psc=1/" target="_blank">submersible 12V pump</a> is floating inside the barrel and drives the watering system.
+
+The outlet of the pump is connected to a <a href="https://www.amazon.de/gp/product/B07VG6VLL6/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1" target="_blank">fourfold magnetic valve</a>. On the one hand we need the valve since some of my plants are standing on the floor and are hence below the ater level of the barrel. On the other hand the fourfold valve allows to independently water up to 4 strands of different plants (e.g. different watering durations) with only one pump. 
+
+The outputs of the valves are connected to a <a href="https://www.amazon.de/gp/product/B07GGVJRF9/ref=ppx_yo_dt_b_asin_title_o09_s01?ie=UTF8&psc=1" target="_blank">4mm tube containing multiple nozzles</a>, at least one for each single plant (see uppermost picture). 
 
 ## Electronics
 
