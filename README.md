@@ -11,7 +11,7 @@ Future features which are not yet realized include a soil moisture sensor which 
 <img src="./pictures/pump_barrel_valves.png" width="500">
 The central water storage of the system is an old barrel (120l) which I found on the attic (according to the label it seemed to have been used for schnapps previously;) ). A [submersible12pump](https://apple.com) 
 . (https://www.amazon.de/gp/product/B001CV02U4/ref=ppx_yo_dt_b_asin_title_o09_s00?ie=UTF8&psc=1/) is floating inside the barrel. The pump drives the watering system and its outlet is connected to a valve. 
-This site was built using [GitHub Pages](https://pages.github.com/).
+This site was built using [GitHub Pages](https://pages.github.com/) <a href="https://pages.github.com/">link text</a>.
 
 ## Electronics
 
