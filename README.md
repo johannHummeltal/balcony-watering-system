@@ -26,4 +26,6 @@ One of the biggest challenges was to make the electronics weather proofed for ou
 
 ### ESP32 Software
 
+'esp32_code' is flahsed onto the microcontroller using the arduino IDE. 
+
 ### Web Interface
