@@ -26,6 +26,11 @@ One of the biggest challenges was to make the electronics weather proofed for ou
 
 ### ESP32 Software
 
-`esp32_code` is flahsed onto the microcontroller using the arduino IDE. 
+`esp32_code` is flahsed onto the microcontroller using the Arduino IDE. The program is written such, that the ESP starts watering directly when it was booted. 
+The system is watering each strand one after the other. The duration can be defined separately for every strand via the web interface. Once all strands are finished, the pump and the valves aer turned off and the ESP goes to deep sleep to ensure minimum power consumption. After a predefined timeout (to be adjusted via web interface) the ESP wakes up and the process starts all over again. Like this you can for example water your plants twice a day - in the morning and in the evening. 
+Furthermore the ESP reads out a fill level sensor to notice when the barrel is empty. If this is the case the ESP sends an e-mail notification to the user using the `esp_mail_client.h` library. For this functionality and to provide the web interface functionality the ESP is connected to my local wifi network using the `wifi.h` library. If you want to adapt the program in order to connect to another wifi network you will need to create a simple `credentials.h` file which contains your SSID, your mail adress and your passwords. 
 
 ### Web Interface
+<img src="./pictures/screenshot_user_interface.png" width="500">
+I created a user interface that allows you to setup and to control the watering system using your smartphone or computer. The file `data/watering_system.html` is uploaded into the file system of the uC using the Arduino IDE. When your device is logged into the same network as your ESP you can connect to it by typing the ESP's local IP address into the web browser. Once the connection is established the ESP sends the html file which can than be displayed by the remote device. 
+
